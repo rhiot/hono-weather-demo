@@ -28,6 +28,7 @@ public class DownstreamSender {
     private final HonoClient honoClient;
     // Creates latch to hold messages until connection established
     private final CountDownLatch latch;
+    private RegistrationClient registrationClient;
 
     /**
      * DownstreamSender class constrcutor.
@@ -37,6 +38,7 @@ public class DownstreamSender {
      */
     public DownstreamSender() {
         Future<HonoClient> honoTracker = Future.future();
+        Future<MessageSender> setupTracker = Future.future();
         // Initializing hono client
         honoClient = new HonoClientImpl(vertx,
                 ConnectionFactoryImpl.ConnectionFactoryBuilder.newBuilder()
@@ -49,19 +51,14 @@ public class DownstreamSender {
                         .disableHostnameVerification()
                         .build());
         honoClient.connect(new ProtonClientOptions(), honoTracker.completer());
+        latch = new CountDownLatch(1);
         honoTracker.compose(hono -> {
             // step 2
             // create client for registering device with Hono
             Future<RegistrationClient> regTracker = Future.future();
-            hono.createRegistrationClient("tenant", regTracker.completer());
+            hono.createRegistrationClient("DEFAULT_TENANT", regTracker.completer());
             return regTracker;
-        }).compose(regClient -> {
-            // step 3
-            // create client for sending telemetry data to Hono server
-            registrationClient = regClient;
-            createProducer(TEST_TENANT_ID, setupTracker.completer());
-        }, setupTracker);
-        latch = new CountDownLatch(1);
+        });
     }
 
     public static void main(String[] args) throws Exception {
