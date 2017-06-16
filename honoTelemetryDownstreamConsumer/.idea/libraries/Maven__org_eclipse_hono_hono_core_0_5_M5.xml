@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.eclipse.hono:hono-core:0.5-M5">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/hono/hono-core/0.5-M5/hono-core-0.5-M5.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/hono/hono-core/0.5-M5/hono-core-0.5-M5-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/hono/hono-core/0.5-M5/hono-core-0.5-M5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

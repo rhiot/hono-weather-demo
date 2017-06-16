@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$USER_HOME$/hono/broker/broker.iml" filepath="$USER_HOME$/hono/broker/broker.iml" />
+      <module fileurl="file://$USER_HOME$/hono/dispatchrouter/dispatch-router.iml" filepath="$USER_HOME$/hono/dispatchrouter/dispatch-router.iml" />
+      <module fileurl="file://$USER_HOME$/hono/hono.iml" filepath="$USER_HOME$/hono/hono.iml" />
+      <module fileurl="file://$USER_HOME$/hono/adapters/http-vertx-base/hono-adapter-http-vertx-base.iml" filepath="$USER_HOME$/hono/adapters/http-vertx-base/hono-adapter-http-vertx-base.iml" />
+      <module fileurl="file://$USER_HOME$/hono/adapters/mqtt-vertx/hono-adapter-mqtt-vertx.iml" filepath="$USER_HOME$/hono/adapters/mqtt-vertx/hono-adapter-mqtt-vertx.iml" />
+      <module fileurl="file://$USER_HOME$/hono/adapters/rest-vertx/hono-adapter-rest-vertx.iml" filepath="$USER_HOME$/hono/adapters/rest-vertx/hono-adapter-rest-vertx.iml" />
+      <module fileurl="file://$USER_HOME$/hono/adapters/hono-adapters.iml" filepath="$USER_HOME$/hono/adapters/hono-adapters.iml" />
+      <module fileurl="file://$USER_HOME$/hono/application/hono-app2.iml" filepath="$USER_HOME$/hono/application/hono-app2.iml" />
+      <module fileurl="file://$USER_HOME$/hono/auth/hono-auth.iml" filepath="$USER_HOME$/hono/auth/hono-auth.iml" />
+      <module fileurl="file://$USER_HOME$/hono/bom/hono-bom.iml" filepath="$USER_HOME$/hono/bom/hono-bom.iml" />
+      <module fileurl="file://$USER_HOME$/hono/client/hono-client.iml" filepath="$USER_HOME$/hono/client/hono-client.iml" />
+      <module fileurl="file://$USER_HOME$/hono/core/hono-core.iml" filepath="$USER_HOME$/hono/core/hono-core.iml" />
+      <module fileurl="file://$USER_HOME$/hono/demo-certs/hono-demo-certs.iml" filepath="$USER_HOME$/hono/demo-certs/hono-demo-certs.iml" />
+      <module fileurl="file://$USER_HOME$/hono/example/hono-example.iml" filepath="$USER_HOME$/hono/example/hono-example.iml" />
+      <module fileurl="file://$USER_HOME$/hono/jmeter/hono-jmeter.iml" filepath="$USER_HOME$/hono/jmeter/hono-jmeter.iml" />
+      <module fileurl="file://$USER_HOME$/hono/legal/hono-legal.iml" filepath="$USER_HOME$/hono/legal/hono-legal.iml" />
+      <module fileurl="file://$USER_HOME$/hono/server/hono-server.iml" filepath="$USER_HOME$/hono/server/hono-server.iml" />
+      <module fileurl="file://$USER_HOME$/hono/service-base/hono-service-base.iml" filepath="$USER_HOME$/hono/service-base/hono-service-base.iml" />
+      <module fileurl="file://$USER_HOME$/hono/site/hono-site.iml" filepath="$USER_HOME$/hono/site/hono-site.iml" />
+      <module fileurl="file://$USER_HOME$/hono/tests/hono-tests.iml" filepath="$USER_HOME$/hono/tests/hono-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../honoTelemetryDownstreamConsumer/honoTelemetryDownstreamConsumer.iml" filepath="$PROJECT_DIR$/../honoTelemetryDownstreamConsumer/honoTelemetryDownstreamConsumer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bin/honoTelemetryDownstreamSender (1).iml" filepath="$PROJECT_DIR$/bin/honoTelemetryDownstreamSender (1).iml" />
+      <module fileurl="file://$PROJECT_DIR$/honoTelemetryDownstreamSender (2).iml" filepath="$PROJECT_DIR$/honoTelemetryDownstreamSender (2).iml" />
+      <module fileurl="file://$PROJECT_DIR$/target/maven-archiver/maven-archiver.iml" filepath="$PROJECT_DIR$/target/maven-archiver/maven-archiver.iml" />
+      <module fileurl="file://$USER_HOME$/hono/metrics/metrics.iml" filepath="$USER_HOME$/hono/metrics/metrics.iml" />
+      <module fileurl="file://$PROJECT_DIR$/untitled/untitled.iml" filepath="$PROJECT_DIR$/untitled/untitled.iml" />
+    </modules>
+  </component>
+</project>
