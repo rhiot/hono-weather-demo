@@ -1,60 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
+    <wildcardResourcePatterns>
+      <entry name="!?*.java" />
+      <entry name="!?*.form" />
+      <entry name="!?*.class" />
+      <entry name="!?*.groovy" />
+      <entry name="!?*.scala" />
+      <entry name="!?*.flex" />
+      <entry name="!?*.kt" />
+      <entry name="!?*.clj" />
+    </wildcardResourcePatterns>
     <annotationProcessing>
       <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="broker" />
-        <module name="dispatch-router" />
-        <module name="hono-adapter-http-vertx-base" />
-        <module name="hono-adapter-mqtt-vertx" />
-        <module name="hono-adapter-rest-vertx" />
-        <module name="hono-app2" />
-        <module name="hono-auth" />
-        <module name="hono-client" />
-        <module name="hono-core" />
-        <module name="hono-demo-certs" />
-        <module name="hono-example" />
-        <module name="hono-jmeter" />
-        <module name="hono-legal" />
-        <module name="hono-server" />
-        <module name="hono-service-base" />
-        <module name="hono-tests" />
-        <module name="honoTelemetryDownstreamConsumer" />
-        <module name="honoTelemetryDownstreamSender (1)" />
-        <module name="honoTelemetryDownstreamSender (2)" />
-        <module name="maven-archiver" />
-        <module name="metrics" />
+        <module name="honoTelemetryDownstreamSender" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="broker" target="1.8" />
-      <module name="dispatch-router" target="1.8" />
-      <module name="hono" target="1.5" />
-      <module name="hono-adapter-http-vertx-base" target="1.8" />
-      <module name="hono-adapter-mqtt-vertx" target="1.8" />
-      <module name="hono-adapter-rest-vertx" target="1.8" />
-      <module name="hono-adapters" target="1.5" />
-      <module name="hono-app2" target="1.8" />
-      <module name="hono-auth" target="1.8" />
-      <module name="hono-bom" target="1.5" />
-      <module name="hono-client" target="1.8" />
-      <module name="hono-core" target="1.8" />
-      <module name="hono-demo-certs" target="1.8" />
-      <module name="hono-example" target="1.8" />
-      <module name="hono-jmeter" target="1.8" />
-      <module name="hono-legal" target="1.8" />
-      <module name="hono-server" target="1.8" />
-      <module name="hono-service-base" target="1.8" />
-      <module name="hono-site" target="1.5" />
-      <module name="hono-tests" target="1.8" />
-      <module name="honoTelemetryDownstreamConsumer" target="1.8" />
-      <module name="honoTelemetryDownstreamSender (1)" target="1.5" />
-      <module name="honoTelemetryDownstreamSender (2)" target="1.8" />
-      <module name="maven-archiver" target="1.5" />
-      <module name="metrics" target="1.8" />
+      <module name="honoTelemetryDownstreamSender" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

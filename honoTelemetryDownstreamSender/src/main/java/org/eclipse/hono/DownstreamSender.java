@@ -20,7 +20,7 @@ public class DownstreamSender {
     public static final int    HONO_PORT = 5671;
     // Creates publishing space and device
     public static final String TENANT_ID = "DEFAULT_TENANT";
-    public static final String DEVICE_ID = "4711";
+    public static final String DEVICE_ID = "4712";
     // How many messages to be sent for each send
     public static final int COUNT = 50;
     // Creates vertx and honoclient instance
