@@ -29,6 +29,7 @@ public class DownstreamSender {
     // Creates latch to hold messages until connection established
     private final CountDownLatch latch;
     private RegistrationClient registrationClient;
+    MessageSender sender;
 
     /**
      * DownstreamSender class constrcutor.
@@ -39,6 +40,15 @@ public class DownstreamSender {
     public DownstreamSender() {
         Future<HonoClient> honoTracker = Future.future();
         Future<MessageSender> setupTracker = Future.future();
+        latch = new CountDownLatch(1);
+        setupTracker.setHandler(r -> {
+                    if (r.succeeded()) {
+                        sender = setupTracker.result();
+                        latch.countDown();
+                    } else {
+                        System.err.println("cannot connect to Hono" + r.cause());
+                    }
+                });
         // Initializing hono client
         honoClient = new HonoClientImpl(vertx,
                 ConnectionFactoryImpl.ConnectionFactoryBuilder.newBuilder()
@@ -51,14 +61,15 @@ public class DownstreamSender {
                         .disableHostnameVerification()
                         .build());
         honoClient.connect(new ProtonClientOptions(), honoTracker.completer());
-        latch = new CountDownLatch(1);
         honoTracker.compose(hono -> {
             // step 2
             // create client for registering device with Hono
             Future<RegistrationClient> regTracker = Future.future();
             hono.createRegistrationClient("DEFAULT_TENANT", regTracker.completer());
             return regTracker;
-        });
+        }).compose(regClient -> {
+            honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
+        }, setupTracker);
     }
 
     public static void main(String[] args) throws Exception {
@@ -70,32 +81,9 @@ public class DownstreamSender {
 
 
     private void sendTelemetryData() throws Exception {
-        final Future<MessageSender> senderFuture = Future.future();
-
-        senderFuture.setHandler(result -> {
-            if (!result.succeeded()) {
-                System.err.println("honoClient could not create telemetry sender : " + result.cause().getMessage());
-            }
-            latch.countDown();
-        });
-
-        final Future<HonoClient> connectionTracker = Future.future();
-        honoClient.connect(new ProtonClientOptions(), connectionTracker.completer());
-
-        connectionTracker.compose(honoClient -> {
-                    honoClient.getOrCreateTelemetrySender(TENANT_ID, senderFuture.completer());
-                },
-                senderFuture);
 
         latch.await();
-
-        if (senderFuture.succeeded()) {
-            MessageSender ms = senderFuture.result();
-
-//            IntStream.range(0, COUNT).forEach(value -> {
-                sendSingleMessage(ms, 1);
-//            });
-        }
+        sendSingleMessage(sender, 1);
 
         vertx.close();
     }
