@@ -86,6 +86,8 @@ public class DownstreamConsumer {
         StringBuilder sb = new StringBuilder("received message [device: ").
                 append(deviceId).append(", content-type: ").append(msg.getContentType()).append(" ]: ").append(content);
 
+        //TODO ADAPT CONSUMER TO EXPECT TEMP
+
         if (msg.getApplicationProperties() != null) {
             sb.append(" with application properties: ").append(msg.getApplicationProperties().getValue());
         }

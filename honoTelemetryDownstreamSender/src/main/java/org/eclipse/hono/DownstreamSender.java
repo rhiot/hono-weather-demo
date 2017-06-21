@@ -8,6 +8,7 @@ import org.eclipse.hono.client.RegistrationClient;
 import org.eclipse.hono.client.impl.HonoClientImpl;
 import org.eclipse.hono.client.MessageSender;
 import org.eclipse.hono.connection.ConnectionFactoryImpl;
+import org.eclipse.hono.util.RegistrationResult;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -68,7 +69,29 @@ public class DownstreamSender {
             hono.createRegistrationClient("DEFAULT_TENANT", regTracker.completer());
             return regTracker;
         }).compose(regClient -> {
-            honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
+
+            Future<RegistrationResult> result = Future.future();
+            result.setHandler(regResult -> {
+                System.out.println("!!!! Registered");
+                if (regResult.succeeded()) {
+
+                    honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
+
+                } else {
+                    System.out.println("!!!!! FAIL");
+                    regResult.cause().printStackTrace();
+                }
+
+            });
+
+            //TODO 1. CHECK IF DEVICE IS REGISTERED BEFORE CALLING REGISTER
+            //TODO 2. CREATE A DIFFERENT APP THAT WILL REGISTER DEVICES
+            //TODO 3. START MULTIPLE SENDERS AND MULTIPLE DEVICES THAT WILL SEND TELEMETRY EVERY COUPLE SECONDS
+            //TODO 4. TRY TO MAKE IT A TEMP SENSOR SIMULTAOR ... EVERY COUPLE SECOND SEND RANDOM INT
+
+
+            regClient.register(DEVICE_ID, null, result.completer());
+
         }, setupTracker);
     }
 
