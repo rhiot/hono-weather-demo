@@ -14,9 +14,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-
+/**
+ * DownstreamSender is the constructor for the DownstreamSender class. Creates telemetry connector and registers
+ * DEVICE_ID under TENANT_ID in hono. Messages are sent from DownstreamSender to that respository on the hono server.
+ */
 public class DownstreamSender {
-    // Creates connection ip and port.
+    // Creates connection ip and port. Change from "localhost" if hono server is registered on a different ip.
     public static final String HONO_HOST = "localhost";
     public static final int    HONO_PORT = 5671;
     // Creates publishing space and device
@@ -41,6 +44,7 @@ public class DownstreamSender {
     public DownstreamSender() {
         Future<HonoClient> honoTracker = Future.future();
         Future<MessageSender> setupTracker = Future.future();
+        //Sets latch with a count of 1. countDown() needs to be called once on latch for it to open.
         latch = new CountDownLatch(1);
         setupTracker.setHandler(r -> {
                     if (r.succeeded()) {
@@ -95,22 +99,39 @@ public class DownstreamSender {
         }, setupTracker);
     }
 
+    /**
+     * Main method for DownstreamSender. Creates DownstreamSender instance, and prepares it to send telemetry data.
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         System.out.println("Starting downstream sender...");
+        //Creates DownstreamSender instance.
         DownstreamSender downstreamSender = new DownstreamSender();
         downstreamSender.sendTelemetryData();
         System.out.println("Finishing downstream sender.");
     }
 
-
+    /**
+     * sendTelemetryData sends telemetry data to hono server once latch is opened. Sends 100 messages.
+     * @throws Exception 
+     */
     private void sendTelemetryData() throws Exception {
-
+        //Holds latch closed until coundDown() has been called enough to overcome count value (once).
         latch.await();
-        sendSingleMessage(sender, 1);
-
+        //Sends 100 messages to hono server.
+        for(int i = 1; i <= 100; i++) {
+            sendSingleMessage(sender, i);
+        }
+        //Closes AMQP connection with hono server.
         vertx.close();
     }
 
+    /**
+     * sendSingleMessage sends a message
+     * @param ms
+     * @param value
+     */
     private void sendSingleMessage(MessageSender ms, int value) {
         CountDownLatch messageSenderLatch = new CountDownLatch(1);
         System.out.println("Sending message... #" + value);

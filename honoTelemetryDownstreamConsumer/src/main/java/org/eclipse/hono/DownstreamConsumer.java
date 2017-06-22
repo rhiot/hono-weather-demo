@@ -14,38 +14,72 @@ import org.eclipse.hono.util.MessageHelper;
 
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * DownstreamConsumer connects to a locally hosted eclipse hono server, and reads any telemetry data that is sent to
+ * the server. To get a server started see here: https://www.eclipse.org/hono/getting-started/
+ *
+ * DownstreamConsumer reads by directly connecting to the hono server, it is not read via the rest adapter or the
+ * mqtt adapter.
+ *
+ */
 public class DownstreamConsumer {
+    //Change from "localhost" to designated ip if you want to run DownstreamConsumer on a different ip.
     public static final String QPID_ROUTER_HOST = "localhost";
+    //Public port to the docker 5671 container, which is the dispatch router container qrouter.
     public static final short  QPID_ROUTER_PORT = 15671;
 
+    //Location for devices to be registered.
     public static final String TENANT_ID = "DEFAULT_TENANT";
 
+    //Vertx instance, allows for AMQP connections to be created.
     private final Vertx vertx = Vertx.vertx();
+    //TODO Dunno what this is exactly
     private final HonoClient honoClient;
 
+    //Latch is a synchronization aid that allows for threads to be held until necessary processes are complete.
     private final CountDownLatch latch;
 
+    /**
+     * DownstreamConsumer is the constructor for the DownstreamConsumer class. Defines the honoClient by creating
+     * a vertx AMQP connection with the desired hono server. Then latch is created with only a single waiting time
+     * set for count.
+     */
     public DownstreamConsumer() {
+        //Establishes honoClient by making an AMQP connection to the hono server.
         honoClient = new HonoClientImpl(vertx,
                 ConnectionFactoryImpl.ConnectionFactoryBuilder.newBuilder()
                         .vertx(vertx)
                         .host(QPID_ROUTER_HOST)
                         .port(QPID_ROUTER_PORT)
+                        //Username and password
                         .user("user1@HONO")
                         .password("pw")
                         .trustStorePath("certs/trusted-certs.pem")
                         .disableHostnameVerification()
                         .build());
+        //Sets latch to have a count value of 1, meaning one countDown needs to be invoked for latch to open.
         latch = new CountDownLatch(1);
     }
 
+    /**
+     * Main method for DownstreamConsumer, creates instance DownstreamConsumer, and prepares it to consume telemetry
+     * data.
+     * @param args Commandline string argument. Not used in DownstreamConsumer.
+     * @throws Exception //TODO
+     */
     public static void main(String[] args) throws Exception {
         System.out.println("Starting downstream consumer...");
+        //Creates instance DownstreamConsumer
         DownstreamConsumer downstreamConsumer = new DownstreamConsumer();
+        //Prepares created DownstreamConsumer to consume telemetry data. Method below.
         downstreamConsumer.consumeTelemetryData();
         System.out.println("Finishing downstream consumer.");
     }
 
+    /**
+     * consumeTelemetryData connects the DownstreamConsumer to the hono server to read from TENANT_ID.
+     * @throws Exception
+     */
     private void consumeTelemetryData() throws Exception {
         final Future<MessageConsumer> consumerFuture = Future.future();
 
@@ -67,15 +101,21 @@ public class DownstreamConsumer {
                 consumerFuture);
 
         latch.await();
-
+        //If consumer connects, then reads information.
         if (consumerFuture.succeeded())
             System.in.read();
+        //Closes AMQP connection with hono server.
         vertx.close();
     }
 
+    /**
+     * handleTelemetryMessage takes received telemetry message and processes it to be printed to command line.
+     * @param msg Telemetry message received through hono server.
+     */
     private void handleTelemetryMessage(final Message msg) {
         final Section body = msg.getBody();
         String content = null;
+        //Ensures that message is Data (type of AMQP messaging). Otherwise exits method.
         if (!(body instanceof Data))
             return;
 
