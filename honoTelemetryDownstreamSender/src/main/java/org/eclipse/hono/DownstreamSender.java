@@ -1,5 +1,8 @@
 package org.eclipse.hono;
 
+import com.github.fedy2.weather.YahooWeatherService;
+import com.github.fedy2.weather.data.Channel;
+import com.github.fedy2.weather.data.unit.DegreeUnit;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.proton.ProtonClientOptions;
@@ -12,6 +15,7 @@ import org.eclipse.hono.util.RegistrationResult;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -114,7 +118,7 @@ public class DownstreamSender {
 
     /**
      * sendTelemetryData sends telemetry data to hono server once latch is opened. Sends 100 messages.
-     * @throws Exception 
+     * @throws Exception
      */
     private void sendTelemetryData() throws Exception {
         //Holds latch closed until coundDown() has been called enough to overcome count value (once).
@@ -128,17 +132,39 @@ public class DownstreamSender {
     }
 
     /**
-     * sendSingleMessage sends a message
+     * sendSingleMessage sends a message.
      * @param ms
      * @param value
      */
-    private void sendSingleMessage(MessageSender ms, int value) {
+    private void sendSingleMessage(MessageSender ms, int value) throws Exception {
         CountDownLatch messageSenderLatch = new CountDownLatch(1);
         System.out.println("Sending message... #" + value);
 
+        //Creates weather service object to get weather from yahoo weather service using a WOEID value.
+        YahooWeatherService service = new YahooWeatherService();
+        //Randomly generates a WOEID value and gets the weather from that location in Fahrenheit.
+        Random rand = new Random();
+        Channel channel = service.getForecast("" + rand.nextInt(30079), DegreeUnit.FAHRENHEIT);
+
+        //Adds weather data's location and temperature to message.
         final Map<String, Object> properties = new HashMap<>();
-        properties.put("my_prop_string", "I'm a string");
-        properties.put("my_prop_int", 10);
+        if (channel.getLocation() != null) {
+            if (channel.getLocation().getCity() != null) {
+                properties.put("location", channel.getLocation().getCity());
+            } else if (channel.getLocation().getRegion() != null) {
+                properties.put("location", channel.getLocation().getRegion());
+            } else {
+                properties.put("location", channel.getLocation().getCountry());
+            }
+            if (channel.getItem().getCondition() != null) {
+                properties.put("temperature", channel.getItem().getCondition().getTemp());
+            } else {
+                properties.put("temperature", "???");
+            }
+        } else {
+            properties.put("location", "FAILURE TO SEND MESSAGE");
+//            properties.put("temperature", "");
+        }
 
         ms.send(DEVICE_ID, properties, "myMessage" + value, "text/plain",
                 v -> {

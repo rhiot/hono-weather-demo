@@ -126,12 +126,27 @@ public class DownstreamConsumer {
         StringBuilder sb = new StringBuilder("received message [device: ").
                 append(deviceId).append(", content-type: ").append(msg.getContentType()).append(" ]: ").append(content);
 
+
+
+        StringBuilder test = new StringBuilder("Weather Data for ").append(msg.getApplicationProperties().getValue().
+                get("location")).append("\n");
+
         //TODO ADAPT CONSUMER TO EXPECT TEMP
 
         if (msg.getApplicationProperties() != null) {
-            sb.append(" with application properties: ").append(msg.getApplicationProperties().getValue());
+//            sb.append(" with application properties: ").append(msg.getApplicationProperties().getValue());
+            test.append("Temperature: ").append(msg.getApplicationProperties().getValue().get("temperature"));
+            if(msg.getApplicationProperties().
+                    getValue().
+                    get("location").
+//                    toString().
+                    equals("FAILURE TO SEND MESSAGE")) {
+                test =  new StringBuilder("\n\nFAILURE TO SEND MESSAGE\n\n");
+            }
         }
 
-        System.out.println(sb.toString());
+//        System.out.println("YES" + msg.getApplicationProperties().getValue().get("my_prop_string").toString());
+//        System.out.println(sb.toString());
+        System.out.println(test.toString());
     }
 }
