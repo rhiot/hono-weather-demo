@@ -12,15 +12,15 @@ import org.eclipse.hono.client.impl.HonoClientImpl;
 import org.eclipse.hono.client.MessageSender;
 import org.eclipse.hono.connection.ConnectionFactoryImpl;
 import org.eclipse.hono.util.RegistrationResult;
+import org.json.simple.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
 /**
  * DownstreamSender is the constructor for the DownstreamSender class. Creates telemetry connector and registers
- * DEVICE_ID under TENANT_ID in hono. Messages are sent from DownstreamSender to that respository on the hono server.
+ * DEVICE_ID under TENANT_ID in hono. Messages are sent from DownstreamSender to that repository on the hono server.
  */
 public class DownstreamSender {
     // Creates connection ip and port. Change from "localhost" if hono server is registered on a different ip.
@@ -46,19 +46,20 @@ public class DownstreamSender {
      * - latch instance
      */
     public DownstreamSender() {
-        Future<HonoClient> honoTracker = Future.future();
-        Future<MessageSender> setupTracker = Future.future();
         //Sets latch with a count of 1. countDown() needs to be called once on latch for it to open.
         latch = new CountDownLatch(1);
+
+        Future<MessageSender> setupTracker = Future.future();
         setupTracker.setHandler(r -> {
-                    if (r.succeeded()) {
-                        sender = setupTracker.result();
-                        latch.countDown();
-                    } else {
-                        System.err.println("cannot connect to Hono" + r.cause());
-                    }
-                });
+            if (r.succeeded()) {
+                sender = setupTracker.result();
+                latch.countDown();
+            } else {
+                System.err.println("cannot connect to Hono" + r.cause());
+            }
+        });
         // Initializing hono client
+        Future<HonoClient> honoTracker = Future.future();
         honoClient = new HonoClientImpl(vertx,
                 ConnectionFactoryImpl.ConnectionFactoryBuilder.newBuilder()
                         .vertx(vertx)
@@ -74,32 +75,31 @@ public class DownstreamSender {
             // step 2
             // create client for registering device with Hono
             Future<RegistrationClient> regTracker = Future.future();
-            hono.createRegistrationClient("DEFAULT_TENANT", regTracker.completer());
+            hono.createRegistrationClient(TENANT_ID, regTracker.completer());
             return regTracker;
-        }).compose(regClient -> {
-
+        }).compose((RegistrationClient regClient) -> {
+            //Checks to see if device has already been registered, uses device is true, otherwise registers device.
+            Future<RegistrationResult> checker = Future.future();
             Future<RegistrationResult> result = Future.future();
-            result.setHandler(regResult -> {
-                System.out.println("!!!! Registered");
-                if (regResult.succeeded()) {
-
-                    honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
-
+            checker.setHandler(checkResult -> {
+                System.out.println(checkResult.result().getStatus());
+                if (checkResult.result().getStatus() != 200){
+                    result.setHandler(regResult -> {
+                        System.out.println("Telemetry sender at device id " + DEVICE_ID + " has been created.");
+                        if (regResult.succeeded()) {
+                            honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
+                        } else {
+                            System.out.println("Telemetry sender creation has failed.");
+                            regResult.cause().printStackTrace();
+                        }
+                    });
+                    regClient.register(DEVICE_ID, null, result.completer());
                 } else {
-                    System.out.println("!!!!! FAIL");
-                    regResult.cause().printStackTrace();
+                    System.out.println("Sender has already been created. Using existing telemetry sender.");
+                    honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
                 }
-
             });
-
-            //TODO 1. CHECK IF DEVICE IS REGISTERED BEFORE CALLING REGISTER
-            //TODO 2. CREATE A DIFFERENT APP THAT WILL REGISTER DEVICES
-            //TODO 3. START MULTIPLE SENDERS AND MULTIPLE DEVICES THAT WILL SEND TELEMETRY EVERY COUPLE SECONDS
-            //TODO 4. TRY TO MAKE IT A TEMP SENSOR SIMULTAOR ... EVERY COUPLE SECOND SEND RANDOM INT
-
-
-            regClient.register(DEVICE_ID, null, result.completer());
-
+            regClient.get(DEVICE_ID, checker.completer());
         }, setupTracker);
     }
 
@@ -112,6 +112,7 @@ public class DownstreamSender {
         System.out.println("Starting downstream sender...");
         //Creates DownstreamSender instance.
         DownstreamSender downstreamSender = new DownstreamSender();
+        //Starts sending telemetry data.
         downstreamSender.sendTelemetryData();
         System.out.println("Finishing downstream sender.");
     }
@@ -123,9 +124,25 @@ public class DownstreamSender {
     private void sendTelemetryData() throws Exception {
         //Holds latch closed until coundDown() has been called enough to overcome count value (once).
         latch.await();
-        //Sends 100 messages to hono server.
-        for(int i = 1; i <= 100; i++) {
-            sendSingleMessage(sender, i);
+        int i = 1;
+
+        while(true) {
+            //Sends weather data from Newcastle, England
+            sendSingleMessage(sender, i, 30079);
+            //Sends weather data from Raleigh, USA
+            sendSingleMessage(sender, i , 2478307);
+
+            i++;
+            //Possibly one of the worst things I've ever had to do, not happy about this.
+            for(int j = 0; j < Integer.MAX_VALUE; j++) {
+                for(int k = 0; k < Integer.MAX_VALUE; k++) {
+                //Does nothing
+                }
+            }
+            //Arbitrary break out of loop.
+            if(i == 10000000) {
+                break;
+            }
         }
         //Closes AMQP connection with hono server.
         vertx.close();
@@ -136,37 +153,25 @@ public class DownstreamSender {
      * @param ms
      * @param value
      */
-    private void sendSingleMessage(MessageSender ms, int value) throws Exception {
+    private void sendSingleMessage(MessageSender ms, int value, int woeid) throws Exception {
         CountDownLatch messageSenderLatch = new CountDownLatch(1);
         System.out.println("Sending message... #" + value);
 
         //Creates weather service object to get weather from yahoo weather service using a WOEID value.
         YahooWeatherService service = new YahooWeatherService();
-        //Randomly generates a WOEID value and gets the weather from that location in Fahrenheit.
-        Random rand = new Random();
-        Channel channel = service.getForecast("" + rand.nextInt(30079), DegreeUnit.FAHRENHEIT);
+        //Currently monitors weather in Newcastle, England.
+        Channel channel = service.getForecast("" + woeid, DegreeUnit.CELSIUS);
 
-        //Adds weather data's location and temperature to message.
+        //Empty properties hash map.
         final Map<String, Object> properties = new HashMap<>();
-        if (channel.getLocation() != null) {
-            if (channel.getLocation().getCity() != null) {
-                properties.put("location", channel.getLocation().getCity());
-            } else if (channel.getLocation().getRegion() != null) {
-                properties.put("location", channel.getLocation().getRegion());
-            } else {
-                properties.put("location", channel.getLocation().getCountry());
-            }
-            if (channel.getItem().getCondition() != null) {
-                properties.put("temperature", channel.getItem().getCondition().getTemp());
-            } else {
-                properties.put("temperature", "???");
-            }
-        } else {
-            properties.put("location", "FAILURE TO SEND MESSAGE");
-//            properties.put("temperature", "");
-        }
 
-        ms.send(DEVICE_ID, properties, "myMessage" + value, "text/plain",
+        //Creates JSON string to send location and temperature of each weather reading.
+        JSONObject payload = new JSONObject();
+        payload.put("location", channel.getLocation().getCity());
+        payload.put("temperature", channel.getItem().getCondition().getTemp());
+
+        //Sends message to consumer
+        ms.send(DEVICE_ID, properties, payload.toJSONString(), "text/JSON",
                 v -> {
                     messageSenderLatch.countDown();
                 });
