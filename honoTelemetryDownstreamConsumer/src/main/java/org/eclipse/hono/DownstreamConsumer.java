@@ -10,7 +10,6 @@ import org.eclipse.hono.client.HonoClient;
 import org.eclipse.hono.client.impl.HonoClientImpl;
 import org.eclipse.hono.client.MessageConsumer;
 import org.eclipse.hono.connection.ConnectionFactoryImpl;
-import org.eclipse.hono.util.MessageHelper;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -62,21 +61,6 @@ public class DownstreamConsumer {
                         .build());
         //Sets latch to have a count value of 1, meaning one countDown needs to be invoked for latch to open.
         latch = new CountDownLatch(1);
-    }
-
-    /**
-     * Main method for DownstreamConsumer, creates instance DownstreamConsumer, and prepares it to consume telemetry
-     * data.
-     * @param args Commandline string argument. Not used in DownstreamConsumer.
-     * @throws Exception //TODO
-     */
-    public static void main(String[] args) throws Exception {
-        System.out.println("Starting downstream consumer...");
-        //Creates instance DownstreamConsumer
-        DownstreamConsumer downstreamConsumer = new DownstreamConsumer();
-        //Prepares created DownstreamConsumer to consume telemetry data. Method below.
-        downstreamConsumer.consumeTelemetryData();
-        System.out.println("Finishing downstream consumer.");
     }
 
     /**
@@ -132,5 +116,21 @@ public class DownstreamConsumer {
             System.out.println("Data was not sent in a readable way. Check telemetry input.");
             e.printStackTrace();
         }
+    }
+
+
+    /**
+     * Main method for DownstreamConsumer, creates instance DownstreamConsumer, and prepares it to consume telemetry
+     * data.
+     * @param args Commandline string argument. Not used in DownstreamConsumer.
+     * @throws Exception //TODO
+     */
+    public static void main(String[] args) throws Exception {
+        System.out.println("Starting downstream consumer...");
+        //Creates instance DownstreamConsumer
+        DownstreamConsumer downstreamConsumer = new DownstreamConsumer();
+        //Prepares created DownstreamConsumer to consume telemetry data. Method below.
+        downstreamConsumer.consumeTelemetryData();
+        System.out.println("Finishing downstream consumer.");
     }
 }

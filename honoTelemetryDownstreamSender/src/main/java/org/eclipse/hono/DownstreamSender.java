@@ -45,7 +45,7 @@ public class DownstreamSender {
      * - hono client instance
      * - latch instance
      */
-    public DownstreamSender() {
+    public DownstreamSender(String tennantID, String deviceID) {
         //Sets latch with a count of 1. countDown() needs to be called once on latch for it to open.
         latch = new CountDownLatch(1);
 
@@ -75,7 +75,7 @@ public class DownstreamSender {
             // step 2
             // create client for registering device with Hono
             Future<RegistrationClient> regTracker = Future.future();
-            hono.createRegistrationClient(TENANT_ID, regTracker.completer());
+            hono.createRegistrationClient(tennantID, regTracker.completer());
             return regTracker;
         }).compose((RegistrationClient regClient) -> {
             //Checks to see if device has already been registered, uses device is true, otherwise registers device.
@@ -85,22 +85,83 @@ public class DownstreamSender {
                 System.out.println(checkResult.result().getStatus());
                 if (checkResult.result().getStatus() != 200){
                     result.setHandler(regResult -> {
-                        System.out.println("Telemetry sender at device id " + DEVICE_ID + " has been created.");
+                        System.out.println("Telemetry sender at device id " + deviceID + " has been created.");
                         if (regResult.succeeded()) {
-                            honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
+                            honoClient.getOrCreateTelemetrySender(tennantID, setupTracker.completer());
                         } else {
                             System.out.println("Telemetry sender creation has failed.");
                             regResult.cause().printStackTrace();
                         }
                     });
-                    regClient.register(DEVICE_ID, null, result.completer());
+                    regClient.register(deviceID, null, result.completer());
                 } else {
                     System.out.println("Sender has already been created. Using existing telemetry sender.");
-                    honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
+                    honoClient.getOrCreateTelemetrySender(tennantID, setupTracker.completer());
                 }
             });
-            regClient.get(DEVICE_ID, checker.completer());
+            regClient.get(deviceID, checker.completer());
         }, setupTracker);
+    }
+
+    /**
+     * sendTelemetryData sends telemetry data to hono server once latch is opened. Sends 100 messages.
+     * @throws Exception
+     */
+    public void sendTelemetryData(int WOEID) throws Exception {
+        //Creates new latch to prevent closing of vertx connection.
+        CountDownLatch hold = new CountDownLatch(1);
+        //Holds latch closed until coundDown() has been called enough to overcome count value (once).
+        latch.await();
+        final int[] i = {1};
+        //Runs send message every 10 seconds.
+        long timerID = vertx.setPeriodic(1000, id -> {
+            try {
+                //Sends weather data from specified location.
+                sendSingleMessage(sender, i[0], WOEID);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            i[0]++;
+            //Allows for each telemetry connection to run for 10,000 times before shutting down.
+            if(i[0] > 10000) {
+                hold.countDown();
+            }
+        });
+        //Prevents program from closing vertx connection unitl counDown is called on hold.
+        hold.await();
+        //Closes AMQP connection with hono server.
+        vertx.close();
+    }
+
+    /**
+     * sendSingleMessage sends a message.
+     * @param ms MessageSender that messages are send through.
+     * @param value Number of message to be send.
+     * @param woeid Location of area to be checked.
+     */
+    private void sendSingleMessage(MessageSender ms, int value, int woeid) throws Exception {
+        //Creates new latch to hold message send until all of the information is prepared.
+        CountDownLatch messageSenderLatch = new CountDownLatch(1);
+        System.out.println("Sending message... #" + value);
+        //Creates weather service object to get weather from yahoo weather service using a WOEID value.
+        YahooWeatherService service = new YahooWeatherService();
+        //Currently monitors weather in Newcastle, England.
+        Channel channel = service.getForecast("" + woeid, DegreeUnit.CELSIUS);
+        //Empty properties hash map.
+        final Map<String, Object> properties = new HashMap<>();
+        //Creates JSON string to send location and temperature of each weather reading.
+        JSONObject payload = new JSONObject();
+        payload.put("location", channel.getLocation().getCity());
+        payload.put("temperature", channel.getItem().getCondition().getTemp());
+        //Sends message to consumer
+        ms.send(DEVICE_ID, properties, payload.toJSONString(), "text/JSON",
+                v -> {
+                    messageSenderLatch.countDown();
+                });
+        try {
+            messageSenderLatch.await();
+        } catch (InterruptedException e) {
+        }
     }
 
     /**
@@ -111,93 +172,10 @@ public class DownstreamSender {
     public static void main(String[] args) throws Exception {
         System.out.println("Starting downstream sender...");
         //Creates DownstreamSender instance.
-        DownstreamSender downstreamSender = new DownstreamSender();
-        //Starts sending telemetry data.
-        downstreamSender.sendTelemetryData();
+        DownstreamSender downstreamSender = new DownstreamSender(TENANT_ID, DEVICE_ID);
+        //Starts sending telemetry data for Newcastle, England.
+        downstreamSender.sendTelemetryData(30079);
         System.out.println("Finishing downstream sender.");
-    }
-
-    /**
-     * sendTelemetryData sends telemetry data to hono server once latch is opened. Sends 100 messages.
-     * @throws Exception
-     */
-    private void sendTelemetryData() throws Exception {
-        CountDownLatch hold = new CountDownLatch(1);
-
-        //Holds latch closed until coundDown() has been called enough to overcome count value (once).
-        latch.await();
-        final int[] i = {1};
-
-        long timerID = vertx.setPeriodic(1000, id -> {
-            try {
-                //Sends weather data from Newcastle, England
-                sendSingleMessage(sender, i[0], 30079);
-                //Sends weather data from Raleigh, USA
-                sendSingleMessage(sender, i[0], 2478307);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            i[0]++;
-            if(i[0] > 10000) {
-                hold.countDown();
-            }
-        });
-
-//        while(true) {
-//            //Sends weather data from Newcastle, England
-//            sendSingleMessage(sender, i, 30079);
-//            //Sends weather data from Raleigh, USA
-//            sendSingleMessage(sender, i , 2478307);
-//
-//            i++;
-//
-//            //Possibly one of the worst things I've ever had to do, not happy about this.
-//            for(int j = 0; j < Integer.MAX_VALUE; j++) {
-//                for(int k = 0; k < Integer.MAX_VALUE; k++) {
-//                //Does nothing
-//                }
-//            }
-//            //Arbitrary break out of loop.
-//            if(i == 10000000) {
-//                break;
-//            }
-//        }
-        hold.await();
-        //Closes AMQP connection with hono server.
-        vertx.close();
-    }
-
-    /**
-     * sendSingleMessage sends a message.
-     * @param ms
-     * @param value
-     */
-    private void sendSingleMessage(MessageSender ms, int value, int woeid) throws Exception {
-        CountDownLatch messageSenderLatch = new CountDownLatch(1);
-        System.out.println("Sending message... #" + value);
-
-        //Creates weather service object to get weather from yahoo weather service using a WOEID value.
-        YahooWeatherService service = new YahooWeatherService();
-        //Currently monitors weather in Newcastle, England.
-        Channel channel = service.getForecast("" + woeid, DegreeUnit.CELSIUS);
-
-        //Empty properties hash map.
-        final Map<String, Object> properties = new HashMap<>();
-
-        //Creates JSON string to send location and temperature of each weather reading.
-        JSONObject payload = new JSONObject();
-        payload.put("location", channel.getLocation().getCity());
-        payload.put("temperature", channel.getItem().getCondition().getTemp());
-
-        //Sends message to consumer
-        ms.send(DEVICE_ID, properties, payload.toJSONString(), "text/JSON",
-                v -> {
-                    messageSenderLatch.countDown();
-                });
-        try {
-            messageSenderLatch.await();
-        } catch (InterruptedException e) {
-        }
     }
 }
 
