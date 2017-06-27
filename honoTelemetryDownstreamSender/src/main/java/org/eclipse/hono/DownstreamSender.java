@@ -122,28 +122,47 @@ public class DownstreamSender {
      * @throws Exception
      */
     private void sendTelemetryData() throws Exception {
+        CountDownLatch hold = new CountDownLatch(1);
+
         //Holds latch closed until coundDown() has been called enough to overcome count value (once).
         latch.await();
-        int i = 1;
+        final int[] i = {1};
 
-        while(true) {
-            //Sends weather data from Newcastle, England
-            sendSingleMessage(sender, i, 30079);
-            //Sends weather data from Raleigh, USA
-            sendSingleMessage(sender, i , 2478307);
+        long timerID = vertx.setPeriodic(1000, id -> {
+            try {
+                //Sends weather data from Newcastle, England
+                sendSingleMessage(sender, i[0], 30079);
+                //Sends weather data from Raleigh, USA
+                sendSingleMessage(sender, i[0], 2478307);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            i[0]++;
+            if(i[0] > 10000) {
+                hold.countDown();
+            }
+        });
 
-            i++;
-            //Possibly one of the worst things I've ever had to do, not happy about this.
-            for(int j = 0; j < Integer.MAX_VALUE; j++) {
-                for(int k = 0; k < Integer.MAX_VALUE; k++) {
-                //Does nothing
-                }
-            }
-            //Arbitrary break out of loop.
-            if(i == 10000000) {
-                break;
-            }
-        }
+//        while(true) {
+//            //Sends weather data from Newcastle, England
+//            sendSingleMessage(sender, i, 30079);
+//            //Sends weather data from Raleigh, USA
+//            sendSingleMessage(sender, i , 2478307);
+//
+//            i++;
+//
+//            //Possibly one of the worst things I've ever had to do, not happy about this.
+//            for(int j = 0; j < Integer.MAX_VALUE; j++) {
+//                for(int k = 0; k < Integer.MAX_VALUE; k++) {
+//                //Does nothing
+//                }
+//            }
+//            //Arbitrary break out of loop.
+//            if(i == 10000000) {
+//                break;
+//            }
+//        }
+        hold.await();
         //Closes AMQP connection with hono server.
         vertx.close();
     }
