@@ -113,7 +113,7 @@ public class DownstreamSender {
         //Holds latch closed until coundDown() has been called enough to overcome count value (once).
         latch.await();
         final int[] i = {1};
-        //Runs send message every 10 seconds.
+        //Runs send message every 1 seconds.
         long timerID = vertx.setPeriodic(1000, id -> {
             try {
                 //Sends weather data from specified location.
@@ -121,16 +121,16 @@ public class DownstreamSender {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            i[0]++;
-            //Allows for each telemetry connection to run for 10,000 times before shutting down.
-            if(i[0] > 10000) {
-                hold.countDown();
-            }
+//            i[0]++;
+//            //Allows for each telemetry connection to run for 10,000 times before shutting down.
+//            if(i[0] > 10000) {
+//                hold.countDown();
+//            }
         });
-        //Prevents program from closing vertx connection unitl counDown is called on hold.
-        hold.await();
+        //Prevents program from closing vertx connection until countDown is called on hold.
+//        hold.await();
         //Closes AMQP connection with hono server.
-        vertx.close();
+//        vertx.close();
     }
 
     /**

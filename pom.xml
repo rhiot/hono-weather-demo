@@ -12,6 +12,7 @@
   <modules>
     <module>honoTelemetryDownstreamConsumer</module>
     <module>honoTelemetryDownstreamSender</module>
+    <module>driver</module>
   </modules>
 
 </project>
