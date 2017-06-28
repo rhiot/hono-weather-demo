@@ -11,6 +11,8 @@ public class Driver {
     private static CountDownLatch messageSenderLatch;
     public static void main(String [] args) throws Exception {
 
+        Vertx vertx = Vertx.vertx();
+
         messageSenderLatch = new CountDownLatch(1);
         //Sends telemetry data for three cities in North Carolina
 

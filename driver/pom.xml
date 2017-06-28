@@ -5,7 +5,7 @@
     <groupId>org.eclipse.hono</groupId>
     <artifactId>driver</artifactId>
     <version>0.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
     <name>driver</name>
 
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>org.eclipse.hono</groupId>
             <artifactId>honoTelemetryDownstreamSender</artifactId>
-            <version>0.1-SNAPSHOt</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
