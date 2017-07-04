@@ -7,27 +7,21 @@ import java.util.concurrent.CountDownLatch;
  */
 public class Driver {
     public static final String TENANT_ID = "DEFAULT_TENANT";
-    public static final String DEVICE_ID = "4712";
-    private static CountDownLatch messageSenderLatch;
     public static void main(String [] args) throws Exception {
 
         Vertx vertx = Vertx.vertx();
 
-        messageSenderLatch = new CountDownLatch(1);
         //Sends telemetry data for three cities in North Carolina
 
-        DownstreamSender NC = new DownstreamSender(TENANT_ID,DEVICE_ID);
+        DownstreamSender raleigh = new DownstreamSender(TENANT_ID,"2478307");
+        DownstreamSender chapelHill = new DownstreamSender(TENANT_ID,"2378134");
+        DownstreamSender durham = new DownstreamSender(TENANT_ID,"2394734");
         //Raleigh, NC
-        NC.sendTelemetryData(2478307);
+        raleigh.sendTelemetryData();
         //Chapel Hill, NC
-        NC.sendTelemetryData(2378134);
+        chapelHill.sendTelemetryData();
         //Durham, NC
-        NC.sendTelemetryData(2394734);
+        durham.sendTelemetryData();
 
-//        long timer = vertx.setTimer(10000, id -> {
-//            messageSenderLatch.countDown();
-//        });
-//
-//        messageSenderLatch = new CountDownLatch(1);
     }
 }

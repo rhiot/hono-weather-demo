@@ -10,6 +10,7 @@ import org.eclipse.hono.client.HonoClient;
 import org.eclipse.hono.client.impl.HonoClientImpl;
 import org.eclipse.hono.client.MessageConsumer;
 import org.eclipse.hono.connection.ConnectionFactoryImpl;
+import org.eclipse.hono.util.MessageHelper;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -105,13 +106,15 @@ public class DownstreamConsumer {
         //Ensures that message is Data (type of AMQP messaging). Otherwise exits method.
         if (!(body instanceof Data))
             return;
+        //Gets deviceID.
+        final String deviceID = MessageHelper.getDeviceId(msg);
         //Creates JSON parser to read input telemetry weather data. Prints data to console output.
         JSONParser parser = new JSONParser();
         try {
             Object obj = parser.parse(((Data) msg.getBody()).getValue().toString());
             JSONObject payload = (JSONObject) obj;
-            System.out.println(new StringBuilder("Location: ").append(payload.get("location")).append("; Temperature:").
-                    append(payload.get("temperature")));
+            System.out.println(new StringBuilder("Device: ").append(deviceID).append("; Location: ").
+                    append(payload.get("location")).append("; Temperature:").append(payload.get("temperature")));
         } catch (ParseException e) {
             System.out.println("Data was not sent in a readable way. Check telemetry input.");
             e.printStackTrace();
