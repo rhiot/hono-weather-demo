@@ -10,7 +10,7 @@ Before the HonoScalabilityTest can be run, a Hono server needs to be started up.
 
 The HonoScalabilityTest is built off of the Hono sender and consumer examples located in the user guide section of the eclipse hono page.
 
-This example has been modified to gather real world weather data using the [yahoo weather service] (http://developer.yahoo.com/weather/). To integrate the weather service into the example, we use the java wrapper developed [here](https://github.com/fedy2/yahoo-weather-java-api). 
+This example has been modified to gather real world weather data using the [yahoo weather service](http://developer.yahoo.com/weather/). To integrate the weather service into the example, we use the java wrapper developed [here](https://github.com/fedy2/yahoo-weather-java-api). 
 
 The current iteration of the HonoScalability test runs on localhost, so make sure your hono server is running on localhost as well. The project is also configured to run on default hono server configurations.
 
