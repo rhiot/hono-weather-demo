@@ -10,9 +10,9 @@
   <name>Hono Scalability Test</name>  
 
   <modules>
-    <module>honoTelemetryDownstreamConsumer</module>
-    <module>honoTelemetryDownstreamSender</module>
-    <module>driver</module>
+    <module>weather-data-consumer</module>
+    <module>weather-data-sender</module>
+    <module>weather-data-driver</module>
   </modules>
 
 </project>
