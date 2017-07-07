@@ -14,6 +14,7 @@ import org.eclipse.hono.connection.ConnectionFactoryImpl;
 import org.eclipse.hono.util.RegistrationResult;
 import org.json.simple.JSONObject;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -24,17 +25,17 @@ import java.util.concurrent.CountDownLatch;
  */
 public class DownstreamSender {
     // Creates connection ip and port. Change from "localhost" if hono server is registered on a different ip.
-    public static final String HONO_HOST = "localhost";
-    public static final int    HONO_PORT = 5671;
+    private final String HONO_HOST = System.getProperty("sender.host","localhost");
+    private final int    HONO_PORT = Integer.parseInt(System.getProperty("sender.port","5671"));
     // Creates publishing space and device
-    public static String TENANT_ID;
-    public String DEVICE_ID;
+    private String TENANT_ID = System.getProperty("sender.tenant","DEFAULT_TENANT");
+    private String DEVICE_ID;
     // Creates vertx and honoclient instance
     private final Vertx vertx = Vertx.vertx();
     private final HonoClient honoClient;
     // Creates latch to hold messages until connection established
     private final CountDownLatch latch;
-    MessageSender sender;
+    private MessageSender sender;
 
     /**
      * DownstreamSender class constrcutor.
@@ -42,8 +43,8 @@ public class DownstreamSender {
      * - hono client instance
      * - latch instance
      */
-    public DownstreamSender(String tennantID, String deviceID) {
-        TENANT_ID = tennantID;
+    public DownstreamSender(String deviceID) {
+        //Sets deviceID for DownstreamSender.
         DEVICE_ID = deviceID;
         System.out.println(DEVICE_ID);
         //Sets latch with a count of 1. countDown() needs to be called once on latch for it to open.
@@ -75,7 +76,7 @@ public class DownstreamSender {
             // step 2
             // create client for registering device with Hono
             Future<RegistrationClient> regTracker = Future.future();
-            hono.createRegistrationClient(tennantID, regTracker.completer());
+            hono.createRegistrationClient(TENANT_ID, regTracker.completer());
             return regTracker;
         }).compose((RegistrationClient regClient) -> {
             //Checks to see if device has already been registered, uses device is true, otherwise registers device.
@@ -87,7 +88,7 @@ public class DownstreamSender {
                     result.setHandler(regResult -> {
                         System.out.println("Telemetry sender at device id " + deviceID + " has been created.");
                         if (regResult.succeeded()) {
-                            honoClient.getOrCreateTelemetrySender(tennantID, setupTracker.completer());
+                            honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
                         } else {
                             System.out.println("Telemetry sender creation has failed.");
                             regResult.cause().printStackTrace();
@@ -96,7 +97,7 @@ public class DownstreamSender {
                     regClient.register(deviceID, null, result.completer());
                 } else {
                     System.out.println("Sender has already been created. Using existing telemetry sender.");
-                    honoClient.getOrCreateTelemetrySender(tennantID, setupTracker.completer());
+                    honoClient.getOrCreateTelemetrySender(TENANT_ID, setupTracker.completer());
                 }
             });
             regClient.get(deviceID, checker.completer());
@@ -105,14 +106,14 @@ public class DownstreamSender {
 
     /**
      * sendTelemetryData sends telemetry data to hono server once latch is opened. Sends 100 messages.
-     * @throws Exception
+     * @throws Exception Any exception that could be called. We don't care for them.
      */
     public void sendTelemetryData() throws Exception {
         //Holds latch closed until coundDown() has been called enough to overcome count value (once).
         latch.await();
         final int[] i = {1};
         //Runs send message every 1 seconds.
-        long timerID = vertx.setPeriodic(1000, id -> {
+        vertx.setPeriodic(5000, id -> {
             try {
                 //Sends weather data from specified location.
                 sendSingleMessage(sender, i[0], Integer.parseInt(DEVICE_ID));
@@ -145,24 +146,23 @@ public class DownstreamSender {
         payload.put("temperature", channel.getItem().getCondition().getTemp());
         //Sends message to consumer
         ms.send(DEVICE_ID, properties, payload.toJSONString(), "text/JSON",
-                v -> {
-                    messageSenderLatch.countDown();
-                });
+                v -> messageSenderLatch.countDown());
         try {
             messageSenderLatch.await();
         } catch (InterruptedException e) {
+            System.out.println(Arrays.toString(e.getStackTrace()));
         }
     }
 
     /**
      * Main method for DownstreamSender. Creates DownstreamSender instance, and prepares it to send telemetry data.
-     * @param args
-     * @throws Exception
+     * @param args Default main string array.
+     * @throws Exception Any exception that could be called. We don't care for them.
      */
     public static void main(String[] args) throws Exception {
         System.out.println("Starting downstream sender...");
         //Creates DownstreamSender instance.
-        DownstreamSender downstreamSender = new DownstreamSender("DEFAULT_TENANT", "30079");
+        DownstreamSender downstreamSender = new DownstreamSender("30079");
         //Starts sending telemetry data for Newcastle, England.
         downstreamSender.sendTelemetryData();
         System.out.println("Finishing downstream sender.");

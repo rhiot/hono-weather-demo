@@ -26,17 +26,17 @@ import java.util.concurrent.CountDownLatch;
  *
  */
 public class DownstreamConsumer {
-    //Change from "localhost" to designated ip if you want to run DownstreamConsumer on a different ip.
-    public static final String QPID_ROUTER_HOST = "localhost";
-    //Public port to the docker 5671 container, which is the dispatch router container qrouter.
-    public static final short  QPID_ROUTER_PORT = 15671;
+    //private from "localhost" to designated ip if you want to run DownstreamConsumer on a different ip.
+    private final String QPID_ROUTER_HOST = System.getProperty("consumer.host","localhost");
+    //Public port to the docker 15671 container, which is the dispatch router container qrouter.
+    private final short  QPID_ROUTER_PORT = Short.parseShort(System.getProperty("consumer.port","15671"));
 
     //Location for devices to be registered.
-    public static final String TENANT_ID = "DEFAULT_TENANT";
+    private final String TENANT_ID = System.getProperty("consumer.tenant","DEFAULT_TENANT");
 
     //Vertx instance, allows for AMQP connections to be created.
     private final Vertx vertx = Vertx.vertx();
-    //TODO Dunno what this is exactly
+
     private final HonoClient honoClient;
 
     //Latch is a synchronization aid that allows for threads to be held until necessary processes are complete.
@@ -47,7 +47,7 @@ public class DownstreamConsumer {
      * a vertx AMQP connection with the desired hono server. Then latch is created with only a single waiting time
      * set for count.
      */
-    public DownstreamConsumer() {
+    private DownstreamConsumer() {
         //Establishes honoClient by making an AMQP connection to the hono server.
         honoClient = new HonoClientImpl(vertx,
                 ConnectionFactoryImpl.ConnectionFactoryBuilder.newBuilder()
@@ -66,7 +66,7 @@ public class DownstreamConsumer {
 
     /**
      * consumeTelemetryData connects the DownstreamConsumer to the hono server to read from TENANT_ID.
-     * @throws Exception
+     * @throws Exception N/A
      */
     private void consumeTelemetryData() throws Exception {
         final Future<MessageConsumer> consumerFuture = Future.future();
@@ -102,7 +102,6 @@ public class DownstreamConsumer {
      */
     private void handleTelemetryMessage(final Message msg) {
         final Section body = msg.getBody();
-        String content = null;
         //Ensures that message is Data (type of AMQP messaging). Otherwise exits method.
         if (!(body instanceof Data))
             return;
@@ -126,7 +125,7 @@ public class DownstreamConsumer {
      * Main method for DownstreamConsumer, creates instance DownstreamConsumer, and prepares it to consume telemetry
      * data.
      * @param args Commandline string argument. Not used in DownstreamConsumer.
-     * @throws Exception //TODO
+     * @throws Exception N/A
      */
     public static void main(String[] args) throws Exception {
         System.out.println("Starting downstream consumer...");
