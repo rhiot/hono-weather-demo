@@ -1,4 +1,3 @@
-package org.eclipse.hono;
 /**
  *  Copyright 2005-2017 Red Hat, Inc.
  *
@@ -15,6 +14,8 @@ package org.eclipse.hono;
  *  permissions and limitations under the License.
  *
  */
+package org.eclipse.hono;
+
 public class WeatherDataDriver {
     public static void main(String [] args) throws Exception {
         //Checks to make sure sender vm options are set, otherwise sets default.
