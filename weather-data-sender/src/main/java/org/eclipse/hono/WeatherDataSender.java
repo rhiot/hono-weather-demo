@@ -30,6 +30,8 @@ import org.eclipse.hono.connection.ConnectionFactoryImpl;
 import org.eclipse.hono.util.RegistrationResult;
 import org.json.simple.JSONObject;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +45,12 @@ public class WeatherDataSender {
     private final HonoClient honoClient;
     // Creates latch to hold messages until connection established
     private final CountDownLatch latch;
+    // MessageSender sends the messages through the vertx connection.
     private MessageSender sender;
+    // City of weather data.
+    private String city;
+    // Temperature in city.
+    private int temp;
 
     /**
      * WeatherDataSender class constrcutor.
@@ -151,13 +158,24 @@ public class WeatherDataSender {
         //Creates weather service object to get weather from yahoo weather service using a WOEID value.
         YahooWeatherService service = new YahooWeatherService();
         //Currently monitors weather in Newcastle, England.
-        Channel channel = service.getForecast("" + woeid, DegreeUnit.CELSIUS);
+        final Channel[] channel = new Channel[1];
+        vertx.setPeriodic(60000, gather -> {
+            try {
+                channel[0] = service.getForecast("" + woeid, DegreeUnit.CELSIUS);
+                city = channel[0].getLocation().getCity();
+                temp = channel[0].getItem().getCondition().getTemp();
+            } catch (JAXBException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
         //Empty properties hash map.
         final Map<String, Object> properties = new HashMap<>();
         //Creates JSON string to send location and temperature of each weather reading.
         JSONObject payload = new JSONObject();
-        payload.put("location", channel.getLocation().getCity());
-        payload.put("temperature", channel.getItem().getCondition().getTemp());
+        payload.put("location", city);
+        payload.put("temperature", temp);
         //Sends message to consumer
         ms.send(DEVICE_ID, properties, payload.toJSONString(), "text/JSON",
                 v -> messageSenderLatch.countDown());
