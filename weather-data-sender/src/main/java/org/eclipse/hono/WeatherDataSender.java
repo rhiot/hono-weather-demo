@@ -58,13 +58,20 @@ public class WeatherDataSender {
      * - hono client instance
      * - latch instance
      */
-    public WeatherDataSender(String deviceID) {
+    public WeatherDataSender(String deviceID) throws JAXBException {
         //Sets tennantID to VM arguments, defaults to "DEFAULT_TENANT".
         String TENANT_ID = System.getProperty("sender.tenant","DEFAULT_TENANT");
         //Sets deviceID for WeatherDataSender.
         DEVICE_ID = deviceID;
         //Sets latch with a count of 1. countDown() needs to be called once on latch for it to open.
         latch = new CountDownLatch(1);
+
+        //Keeps weather updated.
+        weatherUpdate();
+        vertx.setPeriodic(60000, gather -> {
+            System.out.println(new StringBuilder("Weather updated for: ").append(deviceID));
+            weatherUpdate();
+        });
 
         Future<MessageSender> setupTracker = Future.future();
         setupTracker.setHandler(r -> {
@@ -126,6 +133,32 @@ public class WeatherDataSender {
     }
 
     /**
+     * weatherUpdate keeps the weather updated with the Yahoo weather service, without overloading the messages
+     * send to the service.
+     */
+    private void weatherUpdate() {
+        //Creates weather service object to get weather from yahoo weather service using a WOEID value.
+        YahooWeatherService service = null;
+        try {
+            service = new YahooWeatherService();
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        }
+        //Currently monitors weather in Newcastle, England.
+        final Channel[] channel = new Channel[1];
+        YahooWeatherService finalService = service;
+            try {
+                channel[0] = finalService.getForecast(DEVICE_ID, DegreeUnit.CELSIUS);
+                city = channel[0].getLocation().getCity();
+                temp = channel[0].getItem().getCondition().getTemp();
+            } catch (Exception e) {
+                System.out.println("Something has gone wrong with the weather service.");
+                // Needed for debugging.
+//                e.printStackTrace();
+            }
+    }
+
+    /**
      * sendWeatherData sends telemetry data to hono server once latch is opened. Sends 100 messages.
      * @throws Exception Any exception that could be called. We don't care for them.
      */
@@ -155,21 +188,6 @@ public class WeatherDataSender {
         //Creates new latch to hold message send until all of the information is prepared.
         CountDownLatch messageSenderLatch = new CountDownLatch(1);
         System.out.println("Device " + woeid + "  - Sending message... #" + value);
-        //Creates weather service object to get weather from yahoo weather service using a WOEID value.
-        YahooWeatherService service = new YahooWeatherService();
-        //Currently monitors weather in Newcastle, England.
-        final Channel[] channel = new Channel[1];
-        vertx.setPeriodic(60000, gather -> {
-            try {
-                channel[0] = service.getForecast("" + woeid, DegreeUnit.CELSIUS);
-                city = channel[0].getLocation().getCity();
-                temp = channel[0].getItem().getCondition().getTemp();
-            } catch (Exception e) {
-                System.out.println("Something has gone wrong with the weather service.");
-                // Needed for debugging.
-//                e.printStackTrace();
-            }
-        });
         //Empty properties hash map.
         final Map<String, Object> properties = new HashMap<>();
         //Creates JSON string to send location and temperature of each weather reading.
