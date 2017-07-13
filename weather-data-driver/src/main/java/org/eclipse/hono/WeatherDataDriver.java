@@ -19,10 +19,11 @@ package org.eclipse.hono;
 public class WeatherDataDriver {
     public static void main(String [] args) throws Exception {
         //Checks to make sure sender vm options are set, otherwise sets default.
+        System.getProperty("sender.tenant","DEFAULT_TENANT");
         System.getProperty("sender.host","localhost");
         System.getProperty("sender.port","5671");
-        System.getProperty("sender.tenant","DEFAULT_TENANT");
-        System.getProperty("sender.locations",null);
+        //VM argument for driver specifically.
+        System.getProperty("driver.locations",null);
 
         //Set list of valid locations, used as default if none are set.
         String [] places = {"2478307", "2378134", "2394734", "30079", "30074", "41415", "2440351", "2440349", "2440350",
@@ -31,7 +32,7 @@ public class WeatherDataDriver {
 
         //Locations that work with the program.
         if(System.getProperty("locations") != null) {
-            places = System.getProperty("sender.locations").split(",");
+            places = System.getProperty("driver.locations").split(",");
         }
 
         //Creates WeatherDataSender instance.
