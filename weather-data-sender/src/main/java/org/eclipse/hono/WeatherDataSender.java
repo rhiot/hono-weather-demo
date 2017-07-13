@@ -164,10 +164,10 @@ public class WeatherDataSender {
                 channel[0] = service.getForecast("" + woeid, DegreeUnit.CELSIUS);
                 city = channel[0].getLocation().getCity();
                 temp = channel[0].getItem().getCondition().getTemp();
-            } catch (JAXBException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                System.out.println("Something has gone wrong with the weather service.");
+                // Needed for debugging.
+//                e.printStackTrace();
             }
         });
         //Empty properties hash map.
