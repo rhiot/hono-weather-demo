@@ -15,6 +15,10 @@ This example has been modified to gather real world weather data using the [yaho
 The current iteration of the demo runs on localhost, so make sure your hono server is running on localhost as well. The project is also configured to run on default hono server configurations.
 
 ## Instructions
+Once you've gotten the project downloaded into a local repository from Github, go ahead and run 
+
+> mvn clean install
+
 Before data can start being sent to our hono server, we're going to need something to listen at the other end. Let's get our weather-data-consumer started. **If you've changed any of the configurations from the Hono server, you'll need to add VM arguments to our consumer and sender. See instructions below.**   
 
 > java -jar weather-data-consumer/target/weather-data-consumer-0.1-SNAPSHOT.jar
