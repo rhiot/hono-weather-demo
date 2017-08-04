@@ -1,5 +1,8 @@
 # hono-weather-demo
 
+Due to the Hono M6 update, the current iteration of this code simply is not working. 
+
+
 This code is being built as an example of how the Eclipse Hono operates by sending and recieving weather data.
 
 If you're interested in Eclipse Hono, check out: http://www.eclipse.org/hono/
